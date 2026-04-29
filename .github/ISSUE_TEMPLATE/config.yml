@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: XDA discussion thread
+    url: https://xdaforums.com/t/root-for-tripletek-pro-tablet.4353163/
+    about: Existing community thread with reports of LineageOS 20 GSI on the T8 Pro
+  - name: How to dump device info
+    url: https://github.com/Freedom-Guda/tripltek-lineageos/blob/main/docs/how-to-dump-device-info.md
+    about: Single most useful contribution any owner can make
