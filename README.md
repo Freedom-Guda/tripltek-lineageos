@@ -23,7 +23,7 @@ The more devices we cover, the more developers this project attracts. Help with 
 |--------|--------------|-----------------|----------------------|--------|------|---------------|-------|
 | [T7 Pro](devices/t7pro/) | Android 9 | MTK (model TBD) | Yes (Tripltek confirmed) | Unknown | None | Untested | **Active focus** |
 | [T8 Pro](devices/t8pro/) | Android 10 | MTK (model TBD) | Likely | Unknown | None | LOS 20 GSI boots w/ issues | XDA reports partial success |
-| [T9 Pro](devices/t9pro/) | Android 12 | MTK Helio G76 (A76/Mali-G76 MC4) | Unknown | Unknown | None | Untested | |
+| [T9 Pro](devices/t9pro/) | Android 12 | MTK Helio G76 (A76/Mali-G76 MC4) | Yes (OEM unlocking exposed) | Unknown | None | Untested | |
 | [Mini](devices/mini/) | Android 12 | MTK (model TBD) | Unknown | Unknown | None | Untested | Phone form factor |
 | [X Pro](devices/xpro/) | Android (TBD) | MTK AI chip (model TBD) | Unknown | Unknown | None | Untested | Newest, Micro-LED |
 
