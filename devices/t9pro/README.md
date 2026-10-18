@@ -1,59 +1,78 @@
-# Tripltek 9 Pro
+# Tripltek 9 Pro (T93)
 
-> **Status: Untested, but unlockable.** SoC partially confirmed (MTK Helio G76), OEM unlocking confirmed available in Developer options.
+> **Status: Untested, but a strong candidate.** SoC confirmed from a real `getprop` dump
+> ([issue #1](https://github.com/Freedom-Guda/tripltek-lineageos/issues/1)): **MT6785**, not "Helio G76" as
+> first listed. OEM unlocking is available in Developer options.
 
 ---
 
-## Known Specs
+## Specs (from issue #1)
 
 | Item | Value |
 |------|-------|
-| Stock Android | 12 |
-| Display | 9" high-brightness LCD |
-| SoC | MediaTek Helio G76 (Cortex-A76 + Mali-G76 MC4) |
-| RAM | TBD |
-| Storage | TBD |
-| Bootloader unlockable | Yes — OEM unlocking confirmed available |
-| Treble support | Unknown — Android 12 era so probably yes |
-| TWRP | Not yet ported |
-| LineageOS GSI tested | Not yet |
+| Model / product | `TRIPLTEK T93` / `TRIPLTEK_T93`, build `TRIPLTEK_T93_20250122` |
+| SoC | **MT6785V/CD** (Helio G90T/G95 family), `ro.hardware=mt8789` |
+| CPU | 2× Cortex-A76 + 6× Cortex-A55, arm64 |
+| Stock Android | 12 (SDK 31), patch 2023-04-05, vendor patch 2022-11-01 |
+| Kernel | 4.14.186 (clang 11.0.1, built 2025-01-22) |
+| Treble | yes, VNDK 31, board first API 30 |
+| Partitions | A/B + virtual A/B, dynamic (`super`), UFS (`/dev/block/sdc*`) |
+| Verified boot | green, locked; OEM unlocking toggle present |
+| BSP / modem | `alps-mp-s0.mp1-V14.99.2` / `MOLY.LR13.R1.MP.V184` |
+| Density | 320 |
+
+`ro.build.fingerprint` is spoofed (`T_mini`, Android 13); the real one is in `persist.sys.modifyfingerprint`.
+Don't trust the fingerprint when matching firmware.
 
 ---
 
-## Why this device matters
+## Why it looks easier than the T7 Pro
 
-The Helio G76 has appeared in multiple consumer tablets, so existing device trees and TWRP ports for unrelated G76 devices may be adaptable. This is the most likely Tripltek device to benefit from "borrowed" upstream work.
+The three things that blocked newer GSIs on the [T7 Pro](../t7pro/) shouldn't apply here:
+
+- **Encryption:** an Android 12 launch device uses FBE, not the FDE that Android 13+ dropped.
+- **Kernel 4.14:** supports ext4 `project` quotas and the eBPF features newer Android expects (4.4 doesn't).
+- **VNDK 31:** a much closer match for current GSIs. MediaTek-modified VNDK libraries (the T7's GPS problem)
+  can still bite, and `tools/patch-vndk.sh` handles that.
+
+So a current, still-updated GSI (e.g. LineageOS 21) is a realistic target. MT6785 also powers the Redmi
+Note 8 Pro (`begonia`), which has public 4.14 kernel source and community LineageOS trees for reference.
+
+---
+
+## Before unlocking: rescue your data
+
+Unlocking wipes userdata. On Android 12, `adb backup` skips app data for apps targeting API 31+, so don't
+rely on it for games or app settings. Use in-app cloud saves or accounts, copy media and flight logs
+(DJI apps keep them in internal storage, and records sync to a DJI account), and take a full BROM backup with
+`tools/backup.sh` if mtkclient can talk to this SoC (not yet confirmed; newer MediaTek preloaders may need auth).
 
 ---
 
 ## Bootloader unlock
 
-The T9 Pro exposes the standard **OEM unlocking** toggle in Developer options, which means Tripltek did not strip the AOSP unlock path on this model. This is the cleanest unlock signal of any Tripltek device so far — better than the T7 Pro's "support says yes, procedure unclear" status.
-
-Standard sequence (do not run these blindly — they will wipe userdata):
+The T9 Pro exposes the standard **OEM unlocking** toggle, so Tripltek didn't strip the AOSP unlock path.
+The same sequence worked on the T7 Pro:
 
 ```
 # On device: Settings → System → Developer options → enable "OEM unlocking"
 adb reboot bootloader
 fastboot flashing unlock
-# follow on-screen prompt to confirm
+# confirm on the tablet (Volume Up on the T7 Pro)
 ```
 
-If you've actually run this on a T9 Pro, please open a [bootloader unlock report](../../.github/ISSUE_TEMPLATE/bootloader-unlock-report.md) so we can confirm the post-unlock state (warning banner, fastboot still accessible, relock behavior, etc.).
+GSIs on A/B + dynamic partitions are flashed from **fastbootd** (`fastboot reboot fastboot`), with vbmeta
+verification disabled. `tools/flash-gsi.sh` currently targets the T7's layout (A-only, no `super`), so it
+needs extending for this device.
+
+If you've run this on a T9 Pro, please open a
+[bootloader unlock report](../../.github/ISSUE_TEMPLATE/bootloader-unlock-report.md).
 
 ---
 
 ## What we need from owners
 
-1. Full `adb shell getprop` dump
-2. CPU-Z screenshot to confirm exact MediaTek model number (MT6769V/CU vs other G76 variants)
-3. Treble Info screenshot
-4. `/proc/partitions`, `/proc/cmdline`, `/sys/block/*/uevent`
-5. Bootloader unlock walkthrough — exact state after `fastboot flashing unlock`
-
----
-
-## Current blockers
-
-- Zero owner dumps in this repo yet
-- No TWRP, no GSI test, no kernel source request
+1. `tools/recon.sh` output (read-only; it redacts nothing, so remove the serial and MACs before posting)
+2. Whether `tools/backup.sh` (mtkclient BROM) connects, and its "SBC/SLA/DAA enabled" lines
+3. Bootloader unlock walkthrough: the exact state after `fastboot flashing unlock`
+4. GSI reports using [docs/gsi-test-template.md](../../docs/gsi-test-template.md)
