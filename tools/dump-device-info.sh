@@ -39,17 +39,17 @@ section "Tripltek device info dump"
 echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Host: $(uname -a 2>/dev/null || echo unknown)"
 
-run "getprop"                adb shell getprop
-run "uname -a"               adb shell uname -a
-run "/proc/cpuinfo"          adb shell cat /proc/cpuinfo
-run "/proc/meminfo"          adb shell cat /proc/meminfo
-run "/proc/cmdline"          adb shell cat /proc/cmdline
-run "/proc/partitions"       adb shell cat /proc/partitions
-run "partitions by name"     adb shell ls -la /dev/block/by-name/
-run "df -h"                  adb shell df -h
-run "/vendor/build.prop"     adb shell cat /vendor/build.prop
-run "/system/build.prop"     adb shell cat /system/build.prop
-run "kernel version"         adb shell cat /proc/version
-run "selinux mode"           adb shell getenforce
+run "getprop"                getprop
+run "uname -a"               uname -a
+run "/proc/cpuinfo"          cat /proc/cpuinfo
+run "/proc/meminfo"          cat /proc/meminfo
+run "/proc/cmdline"          cat /proc/cmdline
+run "/proc/partitions"       cat /proc/partitions
+run "partitions by name"     ls -la /dev/block/by-name/
+run "df -h"                  df -h
+run "/vendor/build.prop"     cat /vendor/build.prop
+run "/system/build.prop"     cat /system/build.prop
+run "kernel version"         cat /proc/version
+run "selinux mode"           getenforce
 
 section "End of dump — REVIEW FOR PII BEFORE POSTING"
