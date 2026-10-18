@@ -33,3 +33,19 @@ node_modules/
 
 # Local notes
 NOTES.local.md
+
+# Device data from tools/ (serials, IMEI, MACs, calibration, chip IDs): never commit
+dumps/
+backups/
+extracted/
+*.bin
+hwparam.json
+.state
+
+# Downloaded tools and images
+third_party/
+
+# Local secrets
+*.token
+.env
+.env.*

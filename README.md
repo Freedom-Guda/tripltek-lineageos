@@ -4,6 +4,9 @@
 
 Tripltek makes some of the brightest, most rugged Android tablets on the market — favored by drone pilots, field workers, and outdoor professionals. But their devices ship with outdated Android versions, no security updates, and no path to a modern OS. This project aims to fix that.
 
+> **First result:** the **T7 Pro runs LineageOS 19.1 (Android 12L)** as a daily driver.
+> Recipe, what works, and the debugging story are in [devices/t7pro](devices/t7pro/).
+
 ---
 
 ## Goals
@@ -21,9 +24,9 @@ The more devices we cover, the more developers this project attracts. Help with 
 
 | Device | Android Stock | SoC (confirmed) | Bootloader Unlockable | Treble | TWRP | LineageOS GSI | Notes |
 |--------|--------------|-----------------|----------------------|--------|------|---------------|-------|
-| [T7 Pro](devices/t7pro/) | Android 9 | MTK (model TBD) | Yes (Tripltek confirmed) | Unknown | None | Untested | **Active focus** |
+| [T7 Pro](devices/t7pro/) | Android 9 | **MT6771** (Helio P60/P70) | **Yes** (`fastboot flashing unlock`, tested) | Yes, VNDK 28 | None | **LOS 19.1 boots, daily use** (GPS lib patch) | LOS 20 blocked by FDE + kernel 4.4 |
 | [T8 Pro](devices/t8pro/) | Android 10 | MTK (model TBD) | Likely | Unknown | None | LOS 20 GSI boots w/ issues | XDA reports partial success |
-| [T9 Pro](devices/t9pro/) | Android 12 | MTK Helio G76 (A76/Mali-G76 MC4) | Yes (OEM unlocking exposed) | Unknown | None | Untested | |
+| [T9 Pro](devices/t9pro/) | Android 12 | **MT6785V/CD** (Helio G90T/G95 family) | Yes (OEM unlocking exposed) | Yes, VNDK 31 | None | Untested | Kernel 4.14 + FBE: good LOS 21 candidate |
 | [Mini](devices/mini/) | Android 12 | MTK (model TBD) | Unknown | Unknown | None | Untested | Phone form factor |
 | [X Pro](devices/xpro/) | Android (TBD) | MTK AI chip (model TBD) | Unknown | Unknown | None | Untested | Newest, Micro-LED |
 
@@ -34,7 +37,7 @@ The more devices we cover, the more developers this project attracts. Help with 
 You don't need to be a developer to help. Every Tripltek owner can contribute:
 
 ### If you own any Tripltek device:
-1. **Run `adb shell getprop`** and submit the output → [info dump template](docs/how-to-dump-device-info.md)
+1. **Run `tools/recon.sh`** (read-only; it changes nothing on the tablet) or `adb shell getprop`, redact the serial and MACs, and submit the output → [info dump template](docs/how-to-dump-device-info.md)
 2. **Install CPU-Z or AIDA64** and screenshot the SoC page → confirms the MediaTek model number
 3. **Install "Treble Info"** from Play Store → tells us if GSI flashing is possible
 4. **Report what works/breaks** after any ROM attempts → [GSI test template](docs/gsi-test-template.md)
@@ -51,6 +54,27 @@ You don't need to be a developer to help. Every Tripltek owner can contribute:
 
 ---
 
+## Tools
+
+Bash scripts for Linux, each tested against fakes (`for t in tests/*_test.sh; do $t; done`).
+
+| Script | What it does | Writes to the tablet? |
+|--------|--------------|-----------------------|
+| `tools/recon.sh` | adb survey: model, SoC, Treble/VNDK, A/B, partitions, lock state, GSI verdict | no |
+| `tools/backup.sh` | Full BROM dump via mtkclient: GPT, preloader, every partition except userdata | no |
+| `tools/verify-backup.sh` | Checks each image against the GPT sizes, writes SHA256SUMS | — |
+| `tools/patch-vndk.sh` | Swaps MediaTek-modified VNDK libs from stock into a GSI (fixes HALs that won't link) | — |
+| `tools/flash-gsi.sh` | Guarded GSI flash: checks unlock state, product, image size and battery voltage | **yes** |
+| `tools/add-bootlog.sh` / `read-bootlog.sh` | Debug image that logs a hung boot to `/cache`, plus the extractor | **yes** (when flashed) |
+| `tools/thermal-watch.sh` | Root: samples real backlight level, temperatures and backlight coolers to CSV | no |
+| `tools/re/` | `mtc_decode.py` (MTK thermal policy), `unpack_boot.py`, `fdtdump.py`, `arsc_arrays.py` | — |
+
+mtkclient setup: `git clone https://github.com/bkerler/mtkclient third_party/mtkclient`, check out a release tag,
+run `uv sync --frozen` inside it, and copy `Setup/Linux/52-mtk.rules` to `/etc/udev/rules.d/`. Stop ModemManager
+(`sudo systemctl stop ModemManager`) before BROM work.
+
+---
+
 ## Community Threads
 
 - [XDA: Root for Tripltek Pro Tablet](https://xdaforums.com/t/root-for-tripletek-pro-tablet.4353163/) — has reports of LOS 20 GSI on T8 Pro
@@ -61,7 +85,7 @@ You don't need to be a developer to help. Every Tripltek owner can contribute:
 ## Important Warnings
 
 - Unlocking the bootloader **voids your warranty**
-- Tripltek's stock firmware includes **thermal limits for the display** — custom kernels that bypass these could damage your screen hardware
+- **Display heat:** on the T7 Pro we found **no** firmware-level display thermal limit ([details](devices/t7pro/#display-brightness-and-thermal)). The backlight's protection is in the PMIC hardware, and a GSI keeps the stock kernel and vendor. Other models are unverified, so be most careful with the X Pro's Micro-LED panel, and keep stock backlight settings in any custom kernel
 - Always **make a full backup** before attempting anything
 - Tripltek does **not support** custom ROM attempts but has confirmed bootloader unlock is possible
 - These are **industrial/professional devices** — proceed carefully
@@ -79,7 +103,8 @@ tripltek-lineageos/
 │   ├── mini/           # Tripltek Mini (phone)
 │   └── xpro/           # Tripltek X Pro (newest)
 ├── docs/               # Guides, templates, how-tos
-├── tools/              # Useful scripts and utilities
+├── tools/              # Scripts (see Tools above); re/ = reverse-engineering helpers, bootlog/ = debug logger
+├── tests/              # Tests for tools/, run with fakes (no tablet needed)
 └── community/          # Links, forum posts, contacts
 ```
 
