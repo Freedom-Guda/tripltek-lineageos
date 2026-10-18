@@ -1,0 +1,10 @@
+# Debug only: see /system/bin/tripltek_bootlog.sh
+service tripltek_bootlog /system/bin/sh /system/bin/tripltek_bootlog.sh
+    user root
+    group root
+    seclabel u:r:su:s0
+    disabled
+    oneshot
+
+on post-fs
+    start tripltek_bootlog

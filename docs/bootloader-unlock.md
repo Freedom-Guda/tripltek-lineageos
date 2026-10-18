@@ -1,22 +1,32 @@
 # Bootloader unlock
 
-Tripltek support has confirmed that bootloader unlocking is **possible** on at least the T7 Pro. The exact procedure is not yet publicly documented in this repo. If you've gone through the process, please contribute notes via PR.
+**T7 Pro: done, standard AOSP path, no token.** Walkthrough below (2026-10-17, one unit, stock T7121-20210420).
+Other models are presumed similar; the T9 Pro also exposes the OEM unlocking toggle.
 
 ---
 
-## What we know
+## T7 Pro walkthrough
 
-- T7 Pro: confirmed unlockable per Tripltek support
-- Other models: presumed unlockable, unconfirmed
+1. **Back up first.** Unlocking erases userdata. A full BROM backup works with the bootloader locked:
+   `tools/backup.sh` (see [devices/t7pro](../devices/t7pro/)).
+2. Settings → About tablet → tap **Build number** 7×. Then Settings → System → Developer options:
+   turn on **OEM unlocking** (needs your PIN) and **USB debugging**. Check: `adb shell getprop sys.oem_unlock_allowed` → `1`.
+3. `adb reboot bootloader` (a small "FASTBOOT mode" text appears). `fastboot getvar unlocked` → `no`.
+4. `fastboot flashing unlock`, then press **Volume Up** on the tablet to confirm (Volume Down cancels).
+5. It takes seconds. Afterwards `fastboot getvar unlocked` → `yes` and `secure` → `no`.
+6. `fastboot reboot`. Every boot now shows an orange "device is unlocked" warning for a few seconds, and
+   Android reports `ro.boot.verifiedbootstate=orange` and `ro.boot.flash.locked=0`. Userdata is wiped.
+
+Boot-menu fallback (when adb isn't available): power off, then hold **Volume Up + Power** → boot menu →
+Volume Up to move to *Fastboot Mode*, Volume Down to select.
 
 ---
 
-## What we don't know
+## Still unknown
 
-- Whether Tripltek requires you to email support for an unlock token, the way Xiaomi and OnePlus do
-- Whether the standard `fastboot flashing unlock` works directly
-- Whether unlocking trips a hardware fuse (Knox-style) that permanently invalidates warranty regardless of relocking
-- Whether relocking is possible after unlock
+- Whether unlocking trips a hardware fuse (Knox-style). Nothing observed on the T7 Pro beyond the orange state
+- Whether relocking works (`fastboot flashing lock`). Untested; relock only with **stock** system/boot/vendor
+  flashed back, or the tablet won't boot
 
 ---
 
